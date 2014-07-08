@@ -358,7 +358,7 @@ MapWidget.prototype.getControls = function(layer) {
 		draw_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
 	} else { // generic geometry
 		var point_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
-		var path_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath'});
+		//var path_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath'});
 		var poly_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
 		draw_ctl = [point_ctl, path_ctl, poly_ctl];
 	}
