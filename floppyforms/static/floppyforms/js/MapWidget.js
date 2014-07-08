@@ -360,7 +360,9 @@ MapWidget.prototype.getControls = function(layer) {
 		var point_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
 		//var path_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath'});
 		var poly_ctl = new OpenLayers.Control.DrawFeature(layer, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
-		draw_ctl = [point_ctl, path_ctl, poly_ctl];
+		draw_ctl = [point_ctl,
+                    //path_ctl,
+                    poly_ctl];
 	}
 	if (this.options.modifiable) {
 		var mod = [new OpenLayers.Control.ModifyFeature(layer, {'displayClass': 'olControlModifyFeature'})];
