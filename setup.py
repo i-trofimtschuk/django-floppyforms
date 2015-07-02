@@ -16,21 +16,23 @@ def find_version(*file_paths):
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
-        return version_match.group(1)
+        return str(version_match.group(1))
     raise RuntimeError("Unable to find version string.")
 
 
 setup(
     name='django-floppyforms',
     version=find_version('floppyforms', '__init__.py'),
-    author=u'Bruno Renié',
-    author_email='bruno@renie.fr',
-    packages=find_packages(),
+    author='Gregor Müllegger',
+    author_email='gregor@muellegger.de',
+    packages=find_packages(exclude=["tests.*", "tests"]),
     include_package_data=True,
-    url='https://github.com/brutasse/django-floppyforms',
+    url='https://github.com/gregmuellegger/django-floppyforms',
     license='BSD licence, see LICENSE file',
     description='Full control of form rendering in the templates',
-    long_description=read('README.rst'),
+    long_description='\n\n'.join((
+        read('README.rst'),
+        read('CHANGES.rst'))),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',

@@ -1,10 +1,12 @@
 from django import forms
+import decimal
 
 from .widgets import (TextInput, HiddenInput, CheckboxInput, Select,
                       ClearableFileInput, SelectMultiple, DateInput,
                       DateTimeInput, TimeInput, URLInput, NumberInput,
                       EmailInput, NullBooleanSelect, SlugInput, IPAddressInput,
-                      SplitDateTimeWidget, SplitHiddenDateTimeWidget)
+                      SplitDateTimeWidget, SplitHiddenDateTimeWidget,
+                      MultipleHiddenInput)
 
 __all__ = (
     'Field', 'CharField', 'IntegerField', 'DateField', 'TimeField',
@@ -65,6 +67,7 @@ class ImageField(Field, forms.ImageField):
 
 class MultipleChoiceField(Field, forms.MultipleChoiceField):
     widget = SelectMultiple
+    hidden_widget = MultipleHiddenInput
 
 
 class TypedMultipleChoiceField(MultipleChoiceField,
@@ -84,10 +87,6 @@ class TimeField(Field, forms.TimeField):
     widget = TimeInput
 
 
-class DecimalField(Field, forms.DecimalField):
-    widget = NumberInput
-
-
 class FloatField(Field, forms.FloatField):
     widget = NumberInput
 
@@ -95,12 +94,34 @@ class FloatField(Field, forms.FloatField):
 class IntegerField(Field, forms.IntegerField):
     widget = NumberInput
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('widget', NumberInput if not kwargs.get('localize') else self.widget)
+        super(IntegerField, self).__init__(*args, **kwargs)
+
     def widget_attrs(self, widget):
         attrs = super(IntegerField, self).widget_attrs(widget) or {}
         if self.min_value is not None:
             attrs['min'] = self.min_value
         if self.max_value is not None:
             attrs['max'] = self.max_value
+        return attrs
+
+
+class DecimalField(Field, forms.DecimalField):
+    widget = NumberInput
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('widget', NumberInput if not kwargs.get('localize') else self.widget)
+        super(DecimalField, self).__init__(*args, **kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super(DecimalField, self).widget_attrs(widget) or {}
+        if self.min_value is not None:
+            attrs['min'] = self.min_value
+        if self.max_value is not None:
+            attrs['max'] = self.max_value
+        if self.decimal_places is not None:
+            attrs['step'] = decimal.Decimal('0.1') ** self.decimal_places
         return attrs
 
 

@@ -4,12 +4,15 @@ Customization
 Override default templates
 --------------------------
 
-Widgets have a ``template_name`` attribute that point to the template to use
-when rendering the form. Default templates are provided, for instance the
-default template for a ``TextInput`` and other input-type widgets is
-``floppyforms/input.html``. You can easily override this template in your
-project-level ``TEMPLATE_DIRS``, assuming they take precedence over app-level
-templates.
+Widgets have a ``template_name`` attribute that points to the template that is
+used when rendering the form. Default templates are provided for all
+:doc:`built-in widgets </widgets-reference>`. In most cases the default
+implementation of these templates have no specific behaviour and simply inherit
+from ``floppyforms/input.html``. They are provided mainly to give an easy
+way for a site-wide customization of how a specifig widget is rendered.
+
+You can easily override these templates in your project-level
+``TEMPLATE_DIRS``, assuming they take precedence over app-level templates.
 
 Custom widgets with custom templates
 ------------------------------------
@@ -38,6 +41,18 @@ with an ``attrs`` dictionary::
 
     class EmailForm(forms.Form):
         email = forms.EmailField(widget=OtherEmailInput())
+
+.. _template_name_customization:
+
+You can also customize the ``template_name`` without subclassing, by passing it
+as an argument when instantiating the widget::
+
+    class EmailForm(forms.Form):
+        email = forms.EmailField(
+            widget=forms.EmailInput(template_name='path/to/other_email.html'))
+
+For advanced use, you can even customize the template used per-render, by
+passing a ``template_name`` argument to the widget's ``render()`` method.
 
 Adding more template variables
 ------------------------------
@@ -68,6 +83,7 @@ extend ``get_context_data()`` which doesn't take any arguments::
             ctx.update({
                 'placeholder': 'hello@example.com',
             })
+            return ctx
 
 Altering the widget's ``attrs``
 -------------------------------

@@ -65,9 +65,6 @@ class BaseGeometryWidget(forms.Textarea):
             except (geos.GEOSException, ValueError):
                 value = None
 
-        if (value and
-            value.geom_type.upper() != self.geom_type and
-            self.geom_type != 'GEOMETRY'):
             value = None
 
         # Defaulting the WKT value to a blank string
@@ -139,19 +136,17 @@ class BaseMetacartaWidget(BaseGeometryWidget):
 
     class Media:
         js = (
-            'floppyforms/js/OpenLayers.js',
             'floppyforms/js/MapWidget.js',
         )
 
 
 class BaseOsmWidget(BaseGeometryWidget):
     """An OpenStreetMap base widget"""
-    map_srid = 900913
     template_name = 'floppyforms/gis/osm.html'
 
     class Media:
         js = (
-            'floppyforms/js/OpenLayers.js',
+            'floppyforms/openlayers/OpenLayers.js',
             '//www.openstreetmap.org/openlayers/OpenStreetMap.js',
             'floppyforms/js/MapWidget.js',
         )
@@ -159,12 +154,10 @@ class BaseOsmWidget(BaseGeometryWidget):
 
 class BaseGMapWidget(BaseGeometryWidget):
     """A Google Maps base widget"""
-    map_srid = 900913
     template_name = 'floppyforms/gis/google.html'
 
     class Media:
         js = (
-            'floppyforms/js/OpenLayers.js',
             'floppyforms/js/MapWidget.js',
             '//maps.google.com/maps/api/js?sensor=false',
         )

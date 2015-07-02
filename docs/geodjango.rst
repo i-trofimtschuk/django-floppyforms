@@ -3,7 +3,7 @@ GeoDjango widgets
 
 .. image:: images/geomcollection.png
 
-Django-floppyforms provides fields and rich widgets for easy manipulation of
+django-floppyforms provides fields and rich widgets for easy manipulation of
 GEOS geometry fields. All geometry types are supported thanks to OpenLayers
 and a custom WKT parser/serializer implementing some Django-specific tweaks.
 
@@ -19,14 +19,9 @@ and a custom WKT parser/serializer implementing some Django-specific tweaks.
 Setting up
 ----------
 
-To make sure you're ready to use the geographic widgets, add
-``'django.contrib.gis'`` to your ``INSTALLED_APPS`` and run the floppyforms
-tests (the tests for geographic widgets are skipped if you don't have
-``django.contrib.gis`` in ``INSTALLED_APPS``)::
-
-    python manage.py test floppyforms
-
-If the tests don't pass, check your GEOS/GDAL installation.
+To make sure you're ready to use the geographic widgets, follow the
+`installation instructions for GeoDjango`_ closely. You need to have
+``'django.contrib.gis'`` in your ``INSTALLED_APPS`` setting.
 
 Next, you need to serve the javascript library provided by django-floppyforms
 (located in ``floppyforms/static/floppyforms/js/MapWidget.js``).
@@ -36,10 +31,12 @@ library will be picked up automatically and gets served by the development
 server. Just make sure you run ``manage.py collectstatic`` once you deploy
 your project.
 
+.. _installation instructions for GeoDjango: https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/
+
 Widget types
 ------------
 
-Django-floppyforms provides **base widgets** and **geometry-specific
+django-floppyforms provides **base widgets** and **geometry-specific
 widgets**:
 
 * **base widgets** are in charge of rendering a map from a specific map
@@ -373,7 +370,7 @@ If you need a custom base widget, it is important to inherit from
 widget, you may end up with conflicting media files. ``BaseGeometryWidget``
 doesn't specify any javascript file so get more control by subclassing it.
 
-.. _contribute them back!: https://github.com/brutasse/django-floppyforms
+.. _contribute them back!: https://github.com/gregmuellegger/django-floppyforms
 
 Examples
 --------

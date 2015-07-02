@@ -1,5 +1,8 @@
 django_floppyforms.egg-info
 dist
+build
 docs/_build
 .coverage
 .tox/
+*.pyc
+__pycache__

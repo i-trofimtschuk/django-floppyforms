@@ -2,15 +2,38 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 from django.conf import settings
-from django.forms.forms import BoundField
-from django.forms.util import ErrorList
+try:
+    from django.forms.utils import ErrorList
+except ImportError:
+    # Fall back to old module name for Django <= 1.5
+    from django.forms.util import ErrorList
 from django.template import (Library, Node, Variable,
                              TemplateSyntaxError, VariableDoesNotExist)
 from django.template.base import token_kwargs
-from django.template.loader import get_template
 from django.utils.functional import empty
 
+from ..compat import get_template
+
+
 register = Library()
+
+
+def is_formset(var):
+    # We assume it is a formset if the var has these fields.
+    significant_attributes = ('forms', 'management_form')
+    return all(hasattr(var, attr) for attr in significant_attributes)
+
+
+def is_form(var):
+    # We assume it is a form if the var has these fields.
+    significant_attributes = ('is_bound', 'data', 'fields')
+    return all(hasattr(var, attr) for attr in significant_attributes)
+
+
+def is_bound_field(var):
+    # We assume it is a BoundField if the var has these fields.
+    significant_attributes = ('as_widget', 'as_hidden', 'is_hidden')
+    return all(hasattr(var, attr) for attr in significant_attributes)
 
 
 class ConfigFilter(object):
@@ -23,6 +46,7 @@ class ConfigFilter(object):
     * the bound field passed into the constructor equals the filtered field.
     * the string passed into the constructor equals the fields name.
     * the string passed into the constructor equals the field's class name.
+    * the string passed into the constructor equals the field's widget class name.
     """
     def __init__(self, var):
         self.var = var
@@ -37,7 +61,17 @@ class ConfigFilter(object):
                     return True
         if self.var == bound_field.name:
             return True
+        # ignore 'object' in the mro, because it would be a match-all filter
+        # anyway. And 'object' could clash with a field that is named the
+        # same.
         for class_ in bound_field.field.__class__.__mro__:
+            if class_.__name__ == 'object':
+                continue
+            if self.var == class_.__name__:
+                return True
+        for class_ in bound_field.field.widget.__class__.__mro__:
+            if class_.__name__ == 'object':
+                continue
             if self.var == class_.__name__:
                 return True
 
@@ -111,7 +145,8 @@ class FormConfig(object):
 
         """
         if filter is None:
-            filter = lambda **kwargs: True
+            def filter(**kwargs):
+                return True
         self.dicts[-1][key].append((value, filter))
 
     def retrieve(self, key, **kwargs):
@@ -183,7 +218,7 @@ class BaseFormNode(Node):
         while bits and bits[0] not in ('using', 'with', 'only'):
             variables.append(Variable(bits.pop(0)))
         if not variables:
-            raise TemplateSyntaxError(u'%s tag expectes at least one '
+            raise TemplateSyntaxError('%s tag expectes at least one '
                                       'template variable as argument.' %
                                       tagname)
         return variables
@@ -299,12 +334,12 @@ class ModifierBase(BaseFormNode):
         filter = None
         if self.options['for']:
             try:
-                var = self.options['for'].resolve(context)
+                for_ = self.options['for'].resolve(context)
             except VariableDoesNotExist:
                 if settings.TEMPLATE_DEBUG:
                     raise
                 return ''
-            filter = ConfigFilter(var)
+            filter = ConfigFilter(for_)
         if self.options['using']:
             try:
                 template_name = self.options['using'].resolve(context)
@@ -320,7 +355,7 @@ class ModifierBase(BaseFormNode):
                 for name, var in self.options['with'].items()])
             config.configure(self.context_config_name,
                              extra_context, filter=filter)
-        return u''
+        return ''
 
     @classmethod
     def parse_bits(cls, tagname, modifier, bits, parser, tokens):
@@ -415,7 +450,7 @@ class BaseFormRenderNode(BaseFormNode):
                 template_name = self.options['using'].resolve(context)
             else:
                 template_name = self.get_template_name(context)
-            return get_template(template_name)
+            return get_template(context, template_name)
         except:
             if settings.TEMPLATE_DEBUG:
                 raise
@@ -449,6 +484,9 @@ class BaseFormRenderNode(BaseFormNode):
     def render(self, context):
         only = self.options['only']
 
+        config = self.get_config(context)
+        config.push()
+
         extra_context = self.get_extra_context(context)
         nodelist = self.get_nodelist(context, extra_context)
         if nodelist is None:
@@ -456,12 +494,14 @@ class BaseFormRenderNode(BaseFormNode):
 
         if only:
             context = context.new(extra_context)
-            return nodelist.render(context)
+            output = nodelist.render(context)
         else:
             context.update(extra_context)
             output = nodelist.render(context)
             context.pop()
-            return output
+
+        config.pop()
+        return output
 
 
 class FormNode(BaseFormRenderNode):
@@ -474,13 +514,9 @@ class FormNode(BaseFormRenderNode):
     def is_list_variable(self, var):
         if not hasattr(var, '__iter__'):
             return False
-        # we assume it is a formset if the var has these fields
-        significant_attributes = ('forms', 'management_form')
-        if all(hasattr(var, attr) for attr in significant_attributes):
-            return True
-        # we assume it is a form if the var has these fields
-        significant_attributes = ('is_bound', 'data', 'fields')
-        if any(hasattr(var, attr) for attr in significant_attributes):
+        if is_formset(var):
+                return True
+        if is_form(var):
             return False
         # form duck-typing was not successful so it must be a list
         return True
@@ -489,13 +525,10 @@ class FormNode(BaseFormRenderNode):
         config = self.get_config(context)
         return config.retrieve('layout')
 
-    def render(self, context):
-        context.push()
-        try:
-            context[self.IN_FORM_CONTEXT_VAR] = True
-            return super(FormNode, self).render(context)
-        finally:
-            context.pop()
+    def get_extra_context(self, context):
+        extra_context = super(FormNode, self).get_extra_context(context)
+        extra_context[self.IN_FORM_CONTEXT_VAR] = True
+        return extra_context
 
     @classmethod
     def parse_using(cls, tagname, parser, bits, options):
@@ -531,7 +564,7 @@ class FormRowNode(BaseFormRenderNode):
     optional_using_parameter = True
 
     def is_list_variable(self, var):
-        if hasattr(var, '__iter__') and not isinstance(var, BoundField):
+        if hasattr(var, '__iter__') and not is_bound_field(var):
             return True
         return False
 
@@ -591,7 +624,7 @@ class FormFieldNode(BaseFormRenderNode):
         except VariableDoesNotExist:
             if settings.DEBUG:
                 raise
-            return u''
+            return ''
 
         widget = config.retrieve('widget', bound_field=bound_field)
         extra_context = self.get_extra_context(context)
@@ -603,7 +636,7 @@ class FormFieldNode(BaseFormRenderNode):
             except VariableDoesNotExist:
                 if settings.DEBUG:
                     raise
-                return u''
+                return ''
 
         if self.options['only']:
             context_instance = context.new(extra_context)
@@ -611,11 +644,15 @@ class FormFieldNode(BaseFormRenderNode):
             context.update(extra_context)
             context_instance = context
 
+        config.push()
+
         # Using a context manager here until Django's BoundField takes
         # template name and context instance parameters
         with attributes(widget, template_name=template_name,
                         context_instance=context_instance) as widget:
             output = bound_field.as_widget(widget=widget)
+
+        config.pop()
 
         if not self.options['only']:
             context.pop()
@@ -658,7 +695,7 @@ class WidgetNode(Node):
             widget_ctx = {'field': field}
             template = 'floppyforms/dummy.html'
 
-        template = get_template(template)
+        template = get_template(context, template)
         context.update(widget_ctx)
         rendered = template.render(context)
         context.pop()

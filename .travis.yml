@@ -1,35 +1,54 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-#  - "pypy"
+python: 2.7
 env:
-  - DJANGO_VERSION=1.4.5
-  - DJANGO_VERSION=1.5.1
+  - TOXENV=py26-14
+  - TOXENV=py26-15
+  - TOXENV=py26-16
+  - TOXENV=py27-14
+  - TOXENV=py27-15
+  - TOXENV=py27-16
+  - TOXENV=py27-17
+  - TOXENV=py27-18
+  - TOXENV=py32-15
+  - TOXENV=py32-16
+  - TOXENV=py32-17
+  - TOXENV=py32-18
+  - TOXENV=py33-15
+  - TOXENV=py33-16
+  - TOXENV=py33-17
+  - TOXENV=py33-18
+  - TOXENV=py34-15
+  - TOXENV=py34-16
+  - TOXENV=py34-17
+  - TOXENV=py34-18
+  - TOXENV=pypy-14
+  - TOXENV=pypy-15
+  - TOXENV=pypy-16
+  - TOXENV=pypy-17
+  - TOXENV=pypy-18
+  - TOXENV=docs
+  - TOXENV=flake8
 before_install:
-  - export PIP_USE_MIRRORS=true
-  - export PIP_INDEX_URL=https://simple.crate.io/
-  - export DJANGO_SETTINGS_MODULE=floppyforms.test_settings
-  - sudo apt-get update
-  - sudo apt-get install binutils gdal-bin libproj-dev libgeos-c1
+  - sudo apt-get -q -y update
+
+  # The following three lines is a fix for travis CI, since it wouldn't be
+  # able to install the dependencies correctly.
+  # See: https://github.com/travis-ci/travis-ci/issues/2683
+  - sudo mv /etc/apt/sources.list.d/pgdg-source.list* /tmp
+  - sudo apt-get remove -q -y binutils gdal-bin libproj-dev libgeos-c1
+  - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+
+  # Required to install Pillow
+  - sudo apt-get -q -y install build-essential
+  # GIS requirements.
+  - sudo apt-get -q -y install binutils gdal-bin libproj-dev libgeos-c1
 install:
-  - pip install -e .
-  - pip install -r requirements/tests.txt Django==$DJANGO_VERSION
-before_script:
-  - (python --version 2>&1 | grep -q "Python 2" && flake8 floppyforms --ignore=E5,E123,E125,E126) || echo "Skipped flake8 check (python 3)"
+  - pip install tox
 script:
-  - make test
-branches:
-  only:
-    - master
+  - tox
 notifications:
   irc:
     channels:
       - "irc.freenode.org#django-floppyforms"
     on_success: change
     on_failure: always
-matrix:
-  exclude:
-    - python: "3.3"
-      env: DJANGO_VERSION=1.4.5

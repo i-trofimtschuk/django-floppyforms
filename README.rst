@@ -1,17 +1,18 @@
-Django-floppyforms
+django-floppyforms
 ==================
 
-.. image:: https://api.travis-ci.org/brutasse/django-floppyforms.png
+.. image:: https://api.travis-ci.org/gregmuellegger/django-floppyforms.png
    :alt: Build Status
-   :target: https://travis-ci.org/brutasse/django-floppyforms
+   :target: https://travis-ci.org/gregmuellegger/django-floppyforms
 
 Full control of form rendering in the templates.
 
-* Author: Bruno Renié and `contributors`_
+* Authors: Gregor Müllegger and many many `contributors`_
+* Original creator: Bruno Renié started this project and kept it going for many years.
 * Licence: BSD
 * Requirements: homework -- read `this`_.
 
-.. _contributors: https://github.com/brutasse/django-floppyforms/contributors
+.. _contributors: https://github.com/gregmuellegger/django-floppyforms/contributors
 .. _this: http://diveintohtml5.info/forms.html
 
 Installation
@@ -28,17 +29,25 @@ readthedocs`_
 To install the `in-development version`_ of django-floppyforms, run ``pip
 install django-floppyforms==dev``.
 
-.. _in-development version: https://github.com/brutasse/django-floppyforms/tarball/master#egg=django-floppyforms-dev
+.. _in-development version: https://github.com/gregmuellegger/django-floppyforms/tarball/master#egg=django-floppyforms-dev
 
 Help
 ----
 
-Ask your questions on the #django-floppyforms IRC channel on freenode.
+Create a ticket in the `issues section on github`_ or ask your questions on the
+#django-floppyforms IRC channel on freenode.
+
+You can get professional consulting regarding django-floppyforms or any other
+Django related work from django-floppyforms' maintainer `Gregor Müllegger`_.
+
+.. _issues section on github: https://github.com/gregmuellegger/django-floppyforms/issues
+.. _Gregor Müllegger: http://gremu.net/
 
 Bugs
 ----
 
-Really? Oh well... Please Report. Or better, fix :)
+Really? Oh well... Please Report. Or better, fix :) We are happy to help you
+through the process of fixing and testing a bug. Just get in touch.
 
 Development
 -----------
@@ -47,7 +56,7 @@ Thanks for asking!
 
 Get the code::
 
-    git clone git@github.com:brutasse/django-floppyforms.git
+    git clone git@github.com:gregmuellegger/django-floppyforms.git
     cd django-floppyforms
     virtualenv -p python2 env
     source env/bin/activate
@@ -55,9 +64,10 @@ Get the code::
 
 Install the development requirements::
 
-    pip install -r requirements/tests.txt
-    pip install django  # must be django 1.4.2 or above
+    pip install "tox>=1.8"
 
 Run the tests::
 
-    DJANGO_SETTINGS_MODULE=floppyforms.test_settings make test
+    tox -e py27-16
+
+You can see all the supported test configurations with ``tox -l``.
